@@ -2,7 +2,11 @@ import "./App.css";
 import RandomData from "./components/RandomData";
 
 function App() {
-  return <RandomData />;
+  return (
+    <>
+      <RandomData />
+    </>
+  );
 }
 
 export default App;
