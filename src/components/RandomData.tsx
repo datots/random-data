@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { faker } from "@faker-js/faker";
 
+interface State {
+  hasError: boolean;
+}
+
 class ErrorBoundary extends React.Component<
   React.PropsWithChildren<{}>,
-  { hasError: boolean }
+  State
 > {
-  state = { hasError: false };
+  state: State = { hasError: false };
 
   static getDerivedStateFromError() {
     return { hasError: true };
@@ -70,63 +74,46 @@ const RandomData: React.FC = () => {
     setTotalUsers((prev) => prev + 10);
   };
 
-  const generateUser = useCallback(() => {
-    try {
-      let errors = 0;
-      if (sliderValue > 0 && Math.random() < sliderValue / 10) {
-        errors++;
-      }
-
-      let name = faker.person.fullName();
-      let address = `${faker.location.city()}, ${faker.location.streetAddress()}`;
-      let phone = faker.phone.number();
-
-      // Generate data based on the selected region
-      switch (region) {
-        case "Georgia (Country)":
-          name = `${faker.person.firstName()} ${faker.person.lastName()}`;
-          address = `${faker.location.city()}, ${faker.location.country()}`;
-          phone = faker.phone.number({ style: "international" });
-          break;
-        case "Poland":
-          name = `${faker.person.firstName()} ${faker.person.lastName()}`;
-          address = `${faker.location.streetAddress()}, ${faker.location.city()}, Poland`;
-          phone = faker.phone.number({ style: "international" });
-          break;
-        case "USA":
-        default:
-          break;
-      }
-
-      let simulatedName = name;
-      let simulatedAddress = address;
-      let simulatedPhone = phone;
-
-      if (errors > 0) {
-        if (Math.random() > 0.5) simulatedName += "XX";
-        if (Math.random() > 0.5)
-          simulatedAddress = simulatedAddress.replace(/\d/g, "0");
-        if (Math.random() > 0.5)
-          simulatedPhone = simulatedPhone.replace(/\d/g, "X");
-      }
-
-      return {
-        id: faker.string.uuid(),
-        name: simulatedName,
-        address: simulatedAddress,
-        phone: simulatedPhone,
-        errors,
-      };
-    } catch (error) {
-      console.error("Error generating a user:", error);
-      return {
-        id: faker.string.uuid(),
-        name: "Error Generating User",
-        address: "N/A",
-        phone: "N/A",
-        errors: 1,
-      };
+  const generateUser = useCallback((): User => {
+    let errors = 0;
+    if (sliderValue > 0 && Math.random() < sliderValue / 10) {
+      errors++;
     }
+
+    let name = faker.person.fullName();
+    let address = `${faker.location.city()}, ${faker.location.streetAddress()}`;
+    let phone = faker.phone.number();
+
+    // Generate data based on the selected region
+    switch (region) {
+      case "Georgia (Country)":
+        name = `${faker.person.firstName()} ${faker.person.lastName()}`;
+        address = `${faker.location.city()}, ${faker.location.country()}`;
+        phone = faker.phone.number({ style: "international" });
+        break;
+      case "Poland":
+        name = `${faker.person.firstName()} ${faker.person.lastName()}`;
+        address = `${faker.location.streetAddress()}, ${faker.location.city()}, Poland`;
+        phone = faker.phone.number({ style: "international" });
+        break;
+      case "USA":
+      default:
+        break;
+    }
+
+    if (errors > 0) {
+      if (Math.random() > 0.5) name += "XX";
+      if (Math.random() > 0.5) address = address.replace(/\d/g, "0");
+      if (Math.random() > 0.5) phone = phone.replace(/\d/g, "X");
+    }
+
+    return {
+      id: faker.string.uuid(),
+      name,
+      address,
+      phone,
+      errors,
+    };
   }, [sliderValue, region]);
 
   useEffect(() => {
@@ -134,9 +121,7 @@ const RandomData: React.FC = () => {
       setLoading(true);
       try {
         faker.seed(seed);
-        const newUsers = Array.from({ length: totalUsers }, () =>
-          generateUser()
-        );
+        const newUsers = Array.from({ length: totalUsers }, generateUser);
         setUsers(newUsers);
       } catch (error) {
         console.error("Error generating users:", error);
@@ -223,6 +208,7 @@ const RandomData: React.FC = () => {
         </div>
         <div className="mb-4">
           <button
+            type="button"
             onClick={generateRandomSeed}
             className="bg-blue-500 text-white p-2 rounded"
           >
